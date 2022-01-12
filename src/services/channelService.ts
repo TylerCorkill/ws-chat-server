@@ -12,6 +12,10 @@ export class ChannelService {
    * @return id - Room ID
    */
   static createChannel(id = ChannelService.generateUniqueId()): string {
+    if (!id) {
+      id = ChannelService.generateUniqueId()
+    }
+    
     if (!ChannelService.#channels[id]) {
       ChannelService.#channels[id] = []
     }

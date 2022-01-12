@@ -1,7 +1,9 @@
 import { WebSocket, WebSocketServer } from 'ws'
 import { ChannelService } from './services/channelService'
-import { getCookies } from './services/cookieService'
+import { cookieName, getCookies } from './services/cookieService'
 import { FormattedMessage, Message, MessageType } from './types'
+import * as process from 'process';
+import * as path from 'path';
 
 const port = 6000
 const wss = new WebSocketServer({ port })
@@ -31,31 +33,26 @@ function formatMessage(message: Message): string {
   return JSON.stringify(m)
 }
 
-console.log(`server started on port ${port}`)
+// const urlChunk = process.env.NODE_ENV === 'production' ? 3 : 1
 
-wss.on('connection', function connection(ws, req) {
-  const cookieId = getCookies(req.headers.cookie ?? '')['TWS-Channel-ID']
-  const id = ChannelService.createChannel(cookieId)
+wss.on('connection', (ws, req) => {
+  const pathId = req.url?.split('/').slice(3).join('/')
+  const id = ChannelService.createChannel(pathId)
   const channel = ChannelService.getChannel(id)
-
+  
   if (!channel) {
     ws.close(1011, 'Channel Not Found')
     return
   }
+
+  // Add connection to channel
   channel.push(ws)
 
-  // Relay message to all connections
-  ws.on('message', (data, isBinary) => {
-    const text = `${isBinary ? data : data.toString()}`
-    sendMessage({
-      type: MessageType.Message,
-      text
-    }, channel)
-  })
-  
+  // Remove WebSocket on connection close
   ws.on('close', () => {
     for (const index in channel) {
       if (channel[index] === ws) {
+        console.log('closed successfully')
         delete channel[index]
         break
       }
@@ -67,9 +64,23 @@ wss.on('connection', function connection(ws, req) {
     ws.send(formatMessage(heartbeat))
   }, 1000)
 
+  // Relay message to all connections
+  ws.on('message', (data, isBinary) => {
+    const message = JSON.parse(`${isBinary ? data : data.toString()}`)
+
+    switch (message.type) {
+      case MessageType.Message:
+        sendMessage(message, channel)
+        return
+    }
+  })
+
   // Connection Established
   ws.send(formatMessage({
     type: MessageType.Connection,
+    id,
     text: `connection established to channel ${id}`
   }))
 })
+
+console.log(`server started on port ${port}`)

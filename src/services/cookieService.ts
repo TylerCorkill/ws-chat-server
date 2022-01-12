@@ -8,9 +8,11 @@
 
 type CookieDict = { [id: string]: string }
 
+export const cookieName = 'TWS-Channel-ID'
+
 export function getCookies(cookies: string) {
   return cookies.split(';').reduce((acc: CookieDict, cookie: string) => {
-    const [name, value] = cookie.split('=');
+    const [name, value] = cookie.split('=')
     return {
       ...acc,
       [name]: value
