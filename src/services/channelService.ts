@@ -1,5 +1,5 @@
-import { WebSocket } from 'ws'
 import { ChannelDict } from '../types'
+import { Channel } from '../classes/channel';
 
 export class ChannelService {
   static #channels: ChannelDict = {}
@@ -17,7 +17,7 @@ export class ChannelService {
     }
     
     if (!ChannelService.#channels[id]) {
-      ChannelService.#channels[id] = []
+      ChannelService.#channels[id] = new Channel()
     }
     return id
   }
@@ -26,7 +26,7 @@ export class ChannelService {
    *
    * @param id
    */
-  static getChannel(id: string): Array<WebSocket> {
+  static getChannel(id: string): Channel {
     return ChannelService.#channels[id]
   }
 

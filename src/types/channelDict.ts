@@ -1,5 +1,5 @@
-import { WebSocket } from 'ws'
+import { Channel } from '../classes/channel';
 
 export type ChannelDict = {
-  [id: string]: Array<WebSocket>;
+  [id: string]: Channel;
 }

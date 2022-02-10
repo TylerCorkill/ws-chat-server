@@ -21,13 +21,6 @@ module.exports = {
       },
     ],
   },
-  // devServer: {
-  //   // static: {
-  //   //   directory: path.join(__dirname, 'public'),
-  //   // },
-  //   compress: true,
-  //   port: 6000,
-  // }
   externals: [/node_modules/, 'bufferutil', 'utf-8-validate'],
   resolve: {
     extensions: ['.ts', '.js']

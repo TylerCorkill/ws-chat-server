@@ -1,41 +1,18 @@
-import { WebSocket, WebSocketServer } from 'ws'
+import { WebSocketServer } from 'ws'
 import { ChannelService } from './services/channelService'
-import { cookieName, getCookies } from './services/cookieService'
-import { FormattedMessage, Message, MessageType } from './types'
-import * as process from 'process';
-import * as path from 'path';
+import { MessageType } from './types'
+import { Connection } from './classes/connection';
 
 const port = 6000
 const wss = new WebSocketServer({ port })
-const chatRooms: Array<Array<WebSocket>> = []
-// Heartbeat message
-const heartbeat = {
-  type: MessageType.Heartbeat
-}
-
-/**
- * sendMessage
- * Sends message to all WebSockets in a channel
- * @param msg
- * @param connections
- */
-function sendMessage(message: Message, connections: WebSocket[]) {
-  connections.forEach((ws) => ws.send(formatMessage(message)))
-}
-
-/**
- * formatMessage
- * Format Message to be sent by WebSocket
- * @param message
- */
-function formatMessage(message: Message): string {
-  const m: FormattedMessage = { ...message, timestamp: Date.now() }
-  return JSON.stringify(m)
-}
 
 // const urlChunk = process.env.NODE_ENV === 'production' ? 3 : 1
 
+
 wss.on('connection', (ws, req) => {
+  const connection = new Connection(ws)
+
+  // Create or join channel based on url
   const pathId = req.url?.split('/').slice(3).join('/')
   const id = ChannelService.createChannel(pathId)
   const channel = ChannelService.getChannel(id)
@@ -46,22 +23,29 @@ wss.on('connection', (ws, req) => {
   }
 
   // Add connection to channel
-  channel.push(ws)
+  channel.connect(ws)
 
-  // Remove WebSocket on connection close
+  // Remove WebSocket and user on connection close
   ws.on('close', () => {
-    for (const index in channel) {
-      if (channel[index] === ws) {
-        console.log('closed successfully')
-        delete channel[index]
-        break
-      }
+    if (channel.unidentify(connection.user)) {
+      console.log('user removed successfully')
+    } else {
+      console.log('Error: Failed to remove the user')
+    }
+
+    if (channel.disconnect(ws)) {
+      console.log('closed successfully')
+    } else {
+      console.log('Error: Failed to close connection')
     }
   })
 
   // Heartbeat on interval
   setInterval(() => {
-    ws.send(formatMessage(heartbeat))
+    connection.send({
+      authenticated: !!connection.user,
+      type: MessageType.Heartbeat
+    })
   }, 1000)
 
   // Relay message to all connections
@@ -70,17 +54,27 @@ wss.on('connection', (ws, req) => {
 
     switch (message.type) {
       case MessageType.Message:
-        sendMessage(message, channel)
+        channel.send(connection.formatMessage(message))
+        return
+      case MessageType.Identity:
+        const success = channel.identify(message.user);
+        if (success) {
+          connection.user = message.user
+        }
+        connection.send({
+          success,
+          type: MessageType.Identity
+        })
         return
     }
   })
 
   // Connection Established
-  ws.send(formatMessage({
+  connection.send({
     type: MessageType.Connection,
     id,
     text: `connection established to channel ${id}`
-  }))
+  })
 })
 
 console.log(`server started on port ${port}`)

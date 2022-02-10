@@ -1,7 +1,9 @@
 import { MessageType } from "./messageType";
 
 export type Message = {
+  authenticated?: boolean
   id?: string
-  text?: string,
-  type: MessageType,
+  success?: boolean
+  text?: string
+  type: MessageType
 }
