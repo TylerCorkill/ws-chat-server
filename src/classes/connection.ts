@@ -1,9 +1,9 @@
-import { WebSocket } from 'ws';
-import { FormattedMessage, Message } from '../types';
+import { WebSocket } from 'ws'
+import { FormattedMessage, Message } from '../types'
 
 export class Connection {
-  private ws: WebSocket;
-  user: string = '';
+  private ws: WebSocket
+  user = ''
 
   constructor(ws: WebSocket) {
     this.ws = ws

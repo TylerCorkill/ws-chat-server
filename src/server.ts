@@ -1,7 +1,7 @@
 import { WebSocketServer } from 'ws'
 import { ChannelService } from './services/channelService'
 import { MessageType } from './types'
-import { Connection } from './classes/connection';
+import { Connection } from './classes/connection'
 
 const port = 6000
 const wss = new WebSocketServer({ port })
@@ -28,15 +28,15 @@ wss.on('connection', (ws, req) => {
   // Remove WebSocket and user on connection close
   ws.on('close', () => {
     if (channel.unidentify(connection.user)) {
-      console.log('user removed successfully')
+      console.log('user removed successfully') // eslint-disable-line
     } else {
-      console.log('Error: Failed to remove the user')
+      console.log('Error: Failed to remove the user') // eslint-disable-line
     }
 
     if (channel.disconnect(ws)) {
-      console.log('closed successfully')
+      console.log('closed successfully') // eslint-disable-line
     } else {
-      console.log('Error: Failed to close connection')
+      console.log('Error: Failed to close connection') // eslint-disable-line
     }
   })
 
@@ -53,11 +53,12 @@ wss.on('connection', (ws, req) => {
     const message = JSON.parse(`${isBinary ? data : data.toString()}`)
 
     switch (message.type) {
-      case MessageType.Message:
+      case MessageType.Message: {
         channel.send(connection.formatMessage(message))
         return
-      case MessageType.Identity:
-        const success = channel.identify(message.user);
+      }
+      case MessageType.Identity: {
+        const success = channel.identify(message.user)
         if (success) {
           connection.user = message.user
         }
@@ -66,6 +67,7 @@ wss.on('connection', (ws, req) => {
           type: MessageType.Identity
         })
         return
+      }
     }
   })
 
@@ -77,4 +79,4 @@ wss.on('connection', (ws, req) => {
   })
 })
 
-console.log(`server started on port ${port}`)
+console.log(`server started on port ${port}`) // eslint-disable-line

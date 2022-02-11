@@ -1,4 +1,4 @@
-import { WebSocket } from 'ws';
+import { WebSocket } from 'ws'
 
 export class Channel {
   private connections: Array<WebSocket> = []

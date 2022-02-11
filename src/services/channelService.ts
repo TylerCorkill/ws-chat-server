@@ -1,5 +1,5 @@
 import { ChannelDict } from '../types'
-import { Channel } from '../classes/channel';
+import { Channel } from '../classes/channel'
 
 export class ChannelService {
   static #channels: ChannelDict = {}
@@ -40,7 +40,6 @@ export class ChannelService {
       const char = Math.floor(Math.random() * (ChannelService.#idDictionary.length - 0) + 0)
       id += ChannelService.#idDictionary[char]
     }
-    console.log(id)
     return id
   }
 
@@ -49,7 +48,7 @@ export class ChannelService {
    * @param length
    */
   static generateUniqueId(length = 12): string {
-    let id: string;
+    let id: string
     do {
       id = ChannelService.generateId(length)
     } while (ChannelService.#channels[id])
