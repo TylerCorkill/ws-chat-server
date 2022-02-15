@@ -8,7 +8,7 @@ export class ChannelService {
   /**
    * createRoom
    * Creates room at existing id or creates new
-   * @param ws - WebSocket that's creating the room
+   * @param id - WebSocket that's creating the room
    * @return id - Room ID
    */
   static createChannel(id = ChannelService.generateUniqueId()): string {
