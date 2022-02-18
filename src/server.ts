@@ -16,6 +16,9 @@ wss.on('connection', (ws, req) => {
   const pathId = req.url?.split('/').slice(3).join('/')
   const id = ChannelService.createChannel(pathId)
   const channel = ChannelService.getChannel(id)
+
+  // State
+  let lastHb = Date.now()
   
   if (!channel) {
     ws.close(1011, 'Channel Not Found')
@@ -46,6 +49,11 @@ wss.on('connection', (ws, req) => {
       authenticated: !!connection.user,
       type: MessageType.Heartbeat
     })
+
+    if (Date.now() - lastHb >= 5000) {
+      channel.unidentify(connection.user)
+      connection.user = ''
+    }
   }, 1000)
 
   // Relay message to all connections
@@ -66,6 +74,10 @@ wss.on('connection', (ws, req) => {
           success,
           type: MessageType.Identity
         })
+        return
+      }
+      case MessageType.Heartbeat: {
+        lastHb = Date.now()
         return
       }
     }
