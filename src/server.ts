@@ -6,22 +6,38 @@ import { Connection } from './classes/connection'
 const port = 6000
 const wss = new WebSocketServer({ port })
 
-// const urlChunk = process.env.NODE_ENV === 'production' ? 3 : 1
+enum LogType {
+  Log,
+  Warn,
+  Error
+}
 
+function log(text: string, type = LogType.Log): void {
+  switch (type) {
+    case LogType.Log:
+      console.log(text) // eslint-disable-line
+      return
+    case LogType.Warn:
+      console.warn(text) // eslint-disable-line
+      return
+    case LogType.Error:
+      console.error(text) // eslint-disable-line
+      return
+  }
+}
 
 wss.on('connection', (ws, req) => {
   const connection = new Connection(ws)
 
   // Create or join channel based on url
-  const pathId = req.url?.split('/').slice(3).join('/')
-  const id = ChannelService.createChannel(pathId)
-  const channel = ChannelService.getChannel(id)
+  const id = req.url?.split('/').slice(3).join('/') ?? ChannelService.generateUniqueId()
+  const channel = ChannelService.get(id) ?? ChannelService.create(id)
 
   // State
   let lastHb = Date.now()
   
   if (!channel) {
-    ws.close(1011, 'Channel Not Found')
+    ws.close(1011, 'Channel wasn\'t found and couldn\'t be created')
     return
   }
 
@@ -31,15 +47,15 @@ wss.on('connection', (ws, req) => {
   // Remove WebSocket and user on connection close
   ws.on('close', () => {
     if (channel.unidentify(connection.user)) {
-      console.log('user removed successfully') // eslint-disable-line
+      log('user removed successfully')
     } else {
-      console.log('Error: Failed to remove the user') // eslint-disable-line
+      log('Error: Failed to remove the user')
     }
 
     if (channel.disconnect(ws)) {
-      console.log('closed successfully') // eslint-disable-line
+      log('closed successfully')
     } else {
-      console.log('Error: Failed to close connection') // eslint-disable-line
+      log('Error: Failed to close connection')
     }
   })
 

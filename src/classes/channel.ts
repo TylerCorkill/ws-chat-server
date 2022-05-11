@@ -1,8 +1,13 @@
 import { WebSocket } from 'ws'
 
+/**
+ * Channel
+ * The Channel class handles everything for a single
+ * channel, including ws connections and user identity
+ */
 export class Channel {
-  private connections: Array<WebSocket> = []
-  private userList: {
+  #connections: Array<WebSocket> = []
+  #userList: {
     [id: string]: true;
   } = {}
 
@@ -13,7 +18,7 @@ export class Channel {
    * @param ws
    */
   connect(ws: WebSocket): void {
-    this.connections.push(ws)
+    this.#connections.push(ws)
   }
 
   /**
@@ -23,9 +28,9 @@ export class Channel {
    * @param ws
    */
   disconnect(ws: WebSocket): boolean {
-    for (const index in this.connections) {
-      if (this.connections[index] === ws) {
-        delete this.connections[index]
+    for (const index in this.#connections) {
+      if (this.#connections[index] === ws) {
+        delete this.#connections[index]
         return true
       }
     }
@@ -39,10 +44,10 @@ export class Channel {
    * @param user
    */
   identify(user: string): boolean {
-    if (this.userList[user]) {
+    if (this.#userList[user]) {
       return false
     }
-    return this.userList[user] = true
+    return this.#userList[user] = true
   }
 
   /**
@@ -52,8 +57,8 @@ export class Channel {
    * @param user
    */
   unidentify(user: string): boolean {
-    if (this.userList[user]) {
-      delete this.userList[user]
+    if (this.#userList[user]) {
+      delete this.#userList[user]
       return true
     }
     return false
@@ -66,6 +71,6 @@ export class Channel {
    * @param formattedMessage
    */
   send(formattedMessage: string): void {
-    this.connections.forEach((ws) => ws.send(formattedMessage))
+    this.#connections.forEach((ws) => ws.send(formattedMessage))
   }
 }

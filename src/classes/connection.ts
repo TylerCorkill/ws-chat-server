@@ -12,6 +12,7 @@ export class Connection {
   /**
    * formatMessage
    * Format Message to be sent by WebSocket
+   *
    * @param message
    */
   formatMessage(message: Message): string {
