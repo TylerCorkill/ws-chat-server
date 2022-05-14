@@ -1,6 +1,5 @@
 import { ChannelDict } from '../types'
-import { Channel } from '../classes/channel'
-
+import { Channel } from '../classes'
 
 /**
  * ChannelService

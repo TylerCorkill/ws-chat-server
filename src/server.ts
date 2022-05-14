@@ -1,58 +1,29 @@
 import { WebSocketServer } from 'ws'
 import { ChannelService } from './services/channelService'
 import { MessageType } from './types'
-import { Connection } from './classes/connection'
+import { log } from './helpers'
 
 const port = 6000
 const wss = new WebSocketServer({ port })
 
-enum LogType {
-  Log,
-  Warn,
-  Error
-}
-
-function log(text: string, type = LogType.Log): void {
-  switch (type) {
-    case LogType.Log:
-      console.log(text) // eslint-disable-line
-      return
-    case LogType.Warn:
-      console.warn(text) // eslint-disable-line
-      return
-    case LogType.Error:
-      console.error(text) // eslint-disable-line
-      return
-  }
-}
-
 wss.on('connection', (ws, req) => {
-  const connection = new Connection(ws)
-
   // Create or join channel based on url
   const id = req.url?.split('/').slice(3).join('/') ?? ChannelService.generateUniqueId()
   const channel = ChannelService.get(id) ?? ChannelService.create(id)
+  const connection = channel.connect(ws)
 
   // State
   let lastHb = Date.now()
-  
+
+  // Close connection if channel can't be found or created
   if (!channel) {
-    ws.close(1011, 'Channel wasn\'t found and couldn\'t be created')
+    connection.close(1011, 'Channel wasn\'t found and couldn\'t be created')
     return
   }
 
-  // Add connection to channel
-  channel.connect(ws)
-
-  // Remove WebSocket and user on connection close
+  // Remove WebSocket on connection close
   ws.on('close', () => {
-    if (channel.unidentify(connection.user)) {
-      log('user removed successfully')
-    } else {
-      log('Error: Failed to remove the user')
-    }
-
-    if (channel.disconnect(ws)) {
+    if (channel.disconnect(connection)) {
       log('closed successfully')
     } else {
       log('Error: Failed to close connection')
@@ -62,13 +33,12 @@ wss.on('connection', (ws, req) => {
   // Heartbeat on interval
   setInterval(() => {
     connection.send({
-      authenticated: !!connection.user,
+      authenticated: connection.authenticated,
       type: MessageType.Heartbeat
     })
 
     if (Date.now() - lastHb >= 5000) {
-      channel.unidentify(connection.user)
-      connection.user = ''
+      channel.unidentify(connection)
     }
   }, 1000)
 
@@ -78,14 +48,11 @@ wss.on('connection', (ws, req) => {
 
     switch (message.type) {
       case MessageType.Message: {
-        channel.send(connection.formatMessage(message))
+        channel.dispatch(message, connection.user)
         return
       }
       case MessageType.Identity: {
-        const success = channel.identify(message.user)
-        if (success) {
-          connection.user = message.user
-        }
+        const success = channel.identify(message.user, connection)
         connection.send({
           success,
           type: MessageType.Identity
@@ -107,4 +74,4 @@ wss.on('connection', (ws, req) => {
   })
 })
 
-console.log(`server started on port ${port}`) // eslint-disable-line
+log(`server started on port ${port}`)
