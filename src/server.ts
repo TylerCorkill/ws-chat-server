@@ -3,7 +3,7 @@ import { ChannelService } from './services/channelService'
 import { MessageType } from './types'
 import { log } from './helpers'
 
-const port = 6000
+const port = process.env.PORT ? +process.env.PORT : 6000
 const wss = new WebSocketServer({ port })
 
 wss.on('connection', (ws, req) => {
