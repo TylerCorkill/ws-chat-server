@@ -73,7 +73,7 @@ Server:
   "success": "true"
 }
 ```
-Client requests usage of a username in a channel. If that username is already taken the server responds false, if not the server responds true and authenticates the connection.
+Client requests usage of a username in a channel. If that username is already taken the server responds false, if not the server responds true and authenticates the connection after 5 seconds.
 
 ### Message
 Client initiated with server dispatching message to all connections  
