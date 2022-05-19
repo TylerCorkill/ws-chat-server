@@ -21,17 +21,8 @@ wss.on('connection', (ws, req) => {
     return
   }
 
-  // Remove WebSocket on connection close
-  ws.on('close', () => {
-    if (channel.disconnect(connection)) {
-      log('closed successfully')
-    } else {
-      log('Error: Failed to close connection')
-    }
-  })
-
   // Heartbeat on interval
-  setInterval(() => {
+  const hbInterval = setInterval(() => {
     connection.send({
       authenticated: connection.authenticated,
       type: MessageType.Heartbeat
@@ -41,6 +32,16 @@ wss.on('connection', (ws, req) => {
       channel.unidentify(connection)
     }
   }, 1000)
+
+  // Remove WebSocket on connection close
+  ws.on('close', () => {
+    if (channel.disconnect(connection)) {
+      clearInterval(hbInterval)
+      log('closed successfully')
+    } else {
+      log('Error: Failed to close connection')
+    }
+  })
 
   // Relay message to all connections
   ws.on('message', (data, isBinary) => {
@@ -69,8 +70,7 @@ wss.on('connection', (ws, req) => {
   // Connection Established
   connection.send({
     type: MessageType.Connection,
-    id,
-    text: `connection established to channel ${id}`
+    id
   })
 })
 
